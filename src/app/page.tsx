@@ -1,65 +1,106 @@
-import Image from "next/image";
+'use client';
+
+import React, { useState } from 'react';
+import InputForm from '@/components/InputForm';
+import CalendarView from '@/components/CalendarView';
+import { AlgorithmInput, Calendar } from '@/types';
+import { generateContentCalendar } from '@/lib/algorithm';
 
 export default function Home() {
+  const [calendars, setCalendars] = useState<Calendar[]>([]);
+  const [currentWeekIndex, setCurrentWeekIndex] = useState<number>(0);
+  const [lastInput, setLastInput] = useState<AlgorithmInput | null>(null);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerate = async (input: AlgorithmInput) => {
+    setIsGenerating(true);
+    try {
+      setLastInput(input);
+      const newCalendar = await generateContentCalendar(input, 0);
+      setCalendars([newCalendar]);
+      setCurrentWeekIndex(0);
+    } catch (error) {
+      console.error("Generation failed:", error);
+      alert("Failed to generate calendar. Check console for details.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleNextWeek = async () => {
+    if (!lastInput) return;
+    
+    const nextIndex = currentWeekIndex + 1;
+    
+    if (nextIndex < calendars.length) {
+        // Already generated
+        setCurrentWeekIndex(nextIndex);
+    } else {
+        // Generate new
+        setIsGenerating(true);
+        try {
+          const newCalendar = await generateContentCalendar(lastInput, nextIndex);
+          setCalendars([...calendars, newCalendar]);
+          setCurrentWeekIndex(nextIndex);
+        } catch (error) {
+          console.error("Generation failed:", error);
+        } finally {
+          setIsGenerating(false);
+        }
+    }
+  };
+
+  const handlePrevWeek = () => {
+    if (currentWeekIndex > 0) {
+      setCurrentWeekIndex(currentWeekIndex - 1);
+    }
+  };
+
+  const currentCalendar = calendars[currentWeekIndex] || null;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-[95%] mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
+            Reddit Content Calendar
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-5 max-w-xl mx-auto text-xl text-gray-500">
+            Generate a strategic content plan for your brand.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {isGenerating && (
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+              <p className="text-lg font-medium text-gray-900">Generating Content...</p>
+              <p className="text-sm text-gray-500">This may take a moment with AI enabled.</p>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1">
+            <InputForm onGenerate={handleGenerate} />
+          </div>
+          <div className="lg:col-span-2 min-w-0">
+            {currentCalendar ? (
+              <CalendarView 
+                calendar={currentCalendar} 
+                onNextWeek={handleNextWeek} 
+                onPrevWeek={handlePrevWeek}
+                canPrev={currentWeekIndex > 0}
+              />
+            ) : (
+              <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">
+                Configure your settings and click "Generate Content Calendar" to see the plan.
+              </div>
+            )}
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
