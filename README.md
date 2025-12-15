@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Reddit Content Calendar Algorithm
+
+This project implements an algorithm to automate the creation of a Reddit content calendar for organic marketing.
+
+## Features
+
+*   **Input Configuration**: Define Company Info, Personas, Subreddits, and Topics.
+*   **Algorithm**:
+    *   Distributes posts across the week.
+    *   Selects topics and subreddits in a round-robin fashion to ensure coverage.
+    *   Assigns "OP" (Original Poster) personas randomly.
+    *   Simulates comments/replies from *other* personas to create natural-looking conversations.
+    *   Generates prompts for an LLM (like ChatGPT) to write the actual content.
+*   **Calendar View**: Visualizes the plan for the week in a table format.
+*   **Export**: Download the generated calendar as a CSV file.
+*   **Subsequent Weeks**: Ability to generate calendars for future weeks.
 
 ## Getting Started
 
-First, run the development server:
+1.  Install dependencies:
+    ```bash
+    npm install
+    ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2.  Run the development server:
+    ```bash
+    npm run dev
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3.  Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+*   `src/lib/algorithm.ts`: The core logic for generating the calendar.
+*   `src/types/index.ts`: TypeScript definitions for the data models.
+*   `src/components/`: UI components for the form and calendar view.
+*   `src/app/page.tsx`: Main application page.
 
-## Learn More
+## Algorithm Details
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The algorithm (`generateContentCalendar`) takes the inputs and:
+1.  Calculates the dates for the upcoming week (or future weeks).
+2.  Iterates through the desired number of posts per week.
+3.  Selects a topic and subreddit.
+4.  Selects a persona to be the OP.
+5.  Generates a "prompt" for the post title and body, instructing the LLM to be subtle and natural.
+6.  Decides on a number of comments (0-2).
+7.  Selects *different* personas to reply to the post, generating prompts for them to agree/disagree constructively.
+8.  Returns a sorted list of posts with their associated comment plans.
